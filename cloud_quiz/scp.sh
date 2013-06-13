@@ -1,0 +1,1 @@
+scp -o "ServerAliveInterval 10" -i datasci-keypair.pem hadoop@ec2-54-218-10-223.us-west-2.compute.amazonaws.com:example-results ./example-results-pb4.txt

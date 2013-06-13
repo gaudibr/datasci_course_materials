@@ -1,0 +1,17 @@
+Output(s):
+Successfully stored 1622294 records (89971068 bytes) in: "/user/hadoop/example-results-pb1"
+
+Counters:
+Total records written : 1622294
+Total bytes written : 89971068
+Spillable Memory Manager spill count : 0
+Total bags proactively spilled: 0
+Total records proactively spilled: 0
+
+Job DAG:
+job_201306080903_0001	->	job_201306080903_0002,
+job_201306080903_0002	->	job_201306080903_0003,
+job_201306080903_0003
+
+
+2013-06-08 09:16:24,462 [main] INFO  org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.MapReduceLauncher - Success!

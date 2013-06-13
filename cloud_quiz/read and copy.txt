@@ -1,0 +1,26 @@
+1.B. Copying files from the Hadoop Filesystem
+
+The result of a pig script is stored in the hadoop directory specified by the store command. That is, for example.pig, the output will be stored at /user/hadoop/example-results, as specified in the script. HDFS is separate from the master node's file system, so before you can copy this to your local machine, you must copy the directory from HDFS to the master node's Linux file system:
+
+% hadoop dfs -copyToLocal /user/hadoop/example-results example-results
+This will create a directory example-results with part-* files in it, which you can copy to your local machine with scp. You can then concatenate all the part-* files to get a single results file, perhaps sorting the results if you like.
+
+An easier option may be to use
+
+% hadoop fs -getmerge  /user/hadoop/example-results example-results
+This command takes a source directory and a destination file as input and concatenates files in src into the destination local file.
+
+
+Use hadoop dfs -help or see the hadoop dfs guide to learn how to manipulate HDFS. (Note that hadoop fs is the same as hadoop dfs.) 
+
+1.C. Copying files to or from the AWS master node
+
+To copy one file from the master node back to your computer, run this command on the local computer: 
+
+$ scp -o "ServerAliveInterval 10" -i </path/to/saved/keypair/file.pem> hadoop@<master.public-dns-name.amazonaws.com>:<file_path> .
+    
+where <file_path> can be absolute or relative to the AWS master node's home folder. The file should be copied onto your current directory ('.') on your local computer. 
+
+Better: copy an entire directory, recursively. Suppose your files are in the directory example-results. They type the following on your loal computer:
+$ scp -o "ServerAliveInterval 10" -i </path/to/saved/keypair/file.pem> -r hadoop@<master.public-dns-name.amazonaws.com>:example-results .
+As an alternative, you may run the scp command on the AWS master node, and connect to your local machine. For that, you need to know your local machine's domain name, or IP address, and your local machine needs to accept ssh connections.
