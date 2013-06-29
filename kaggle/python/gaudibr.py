@@ -34,34 +34,44 @@ train_data[((train_data[0::,4].astype(np.float) > 18) & (train_data[0::,4].astyp
 train_data[train_data[0::,4].astype(np.float) > 50,4] = 4  													#elderly
 #Analyzing age group
 
+number_of_ports = 3
+train_data[train_data[0::,10] == '', 10] = 0
+train_data[train_data[0::,10] == 'S', 10] = 0
+train_data[train_data[0::,10] == 'C', 10] = 1
+train_data[train_data[0::,10] == 'Q', 10] = 2
 
 #This reference table will show we the proportion of survivors as a function of
 # Gender, class and ticket fare.
-survival_table = np.zeros([2,number_of_classes,number_of_price_brackets,number_of_age_groups],float)
+survival_table = np.zeros([2,number_of_classes,number_of_price_brackets,number_of_age_groups, number_of_ports],float)
 
 # I can now find the stats of all the women and men on board
 for i in xrange(number_of_classes):
     for j in xrange(number_of_price_brackets):
-    	for k in xrange(number_of_age_groups):
+      	for k in xrange(number_of_age_groups):
+            for p in xrange(number_of_ports):
 
-            women_only_stats = train_data[ (train_data[0::,3] == "female") \
-                                     & (train_data[0::,1].astype(np.float) == i+1) \
-                                     & (train_data[0:,8].astype(np.float) >= j*fare_bracket_size) \
-                                     & (train_data[0:,8].astype(np.float) < (j+1)*fare_bracket_size) \
-                                     & (train_data[0:,4].astype(np.float) >= k) \
-                                     & (train_data[0:,4].astype(np.float) < (k+1)), 0]
+                women_only_stats = train_data[ (train_data[0::,3] == "female") \
+                                         & (train_data[0::,1].astype(np.float) == i+1) \
+                                         & (train_data[0:,8].astype(np.float) >= j*fare_bracket_size) \
+                                         & (train_data[0:,8].astype(np.float) < (j+1)*fare_bracket_size) \
+                                         & (train_data[0:,4].astype(np.float) >= k) \
+                                         & (train_data[0:,4].astype(np.float) < (k+1))\
+                                         & (train_data[0:,10].astype(np.float) >= p) \
+                                         & (train_data[0:,10].astype(np.float) < (p+1)), 0]
 
-            men_only_stats = train_data[ (train_data[0::,3] != "female") \
-                                     & (train_data[0::,1].astype(np.float) == i+1) \
-                                     & (train_data[0:,8].astype(np.float) >= j*fare_bracket_size) \
-                                     & (train_data[0:,8].astype(np.float) < (j+1)*fare_bracket_size)\
-                                     & (train_data[0:,4].astype(np.float) >= k) \
-                                     & (train_data[0:,4].astype(np.float) < (k+1)), 0]
+                men_only_stats = train_data[ (train_data[0::,3] != "female") \
+                                         & (train_data[0::,1].astype(np.float) == i+1) \
+                                         & (train_data[0:,8].astype(np.float) >= j*fare_bracket_size) \
+                                         & (train_data[0:,8].astype(np.float) < (j+1)*fare_bracket_size)\
+                                         & (train_data[0:,4].astype(np.float) >= k) \
+                                         & (train_data[0:,4].astype(np.float) < (k+1))\
+                                         & (train_data[0:,10].astype(np.float) >= p) \
+                                         & (train_data[0:,10].astype(np.float) < (p+1)), 0]
 
-                                 #if i == 0 and j == 3:
+                                     #if i == 0 and j == 3:
 
-            survival_table[0,i,j,k] = np.mean(women_only_stats.astype(np.float)) #Women stats
-            survival_table[1,i,j,k] = np.mean(men_only_stats.astype(np.float)) #Men stats
+                survival_table[0,i,j,k,p] = np.mean(women_only_stats.astype(np.float)) #Women stats
+                survival_table[1,i,j,k,p] = np.mean(men_only_stats.astype(np.float)) #Men stats
 
 #Since in python if it tries to find the mean of an array with nothing in it
 #such that the denominator is 0, then it returns nan, we can convert these to 0
@@ -70,8 +80,8 @@ survival_table[ survival_table != survival_table ] = 0.
 
 #Now I have my proportion of survivors, simply round them such that if <0.5
 #they dont surivive and >1 they do
-survival_table[ survival_table < 0.5 ] = 0
-survival_table[ survival_table >= 0.5 ] = 1
+#survival_table[ survival_table < 0.5 ] = 0
+#survival_table[ survival_table >= 0.5 ] = 1
 
 
 
@@ -139,15 +149,31 @@ for row in test_file_obect:
         bin_age = 4
 
 
+    try:
+        row[9] = float(row[9]) #No age recorded will come up as a string so
+                                #try to make it a float
+    except: #If fails then equal to train data median
+        row[9] = 'S'
+    #now transform according to age group
+    if row[9] == 'S':
+        bin_port = 0
+    elif row[9] == 'C':
+        bin_port = 1
+    elif row[9] == 'Q':
+        bin_port = 2
+    
+
+
     #Now I have the bin fare, the class and whether female or male we can
     #just cross ref their details with our 'survivial table
 
 
     if row[2] == 'female':
-        row.insert(0,int(survival_table[0,float(row[0])-1,bin_fare,bin_age])) #Insert the prediciton
+        row.insert(0,int(survival_table[0,float(row[0])-1,bin_fare,bin_age,bin_port])) #Insert the prediciton
                                                         #at the start of the row
         open_file_object.writerow(row) #Write the row to the file
     else:
-        row.insert(0,int(survival_table[1,float(row[0])-1,bin_fare,bin_age])) #Insert the prediciton
+        row.insert(0,int(survival_table[1,float(row[0])-1,bin_fare,bin_age,bin_port])) #Insert the prediciton
                                                         #at the start of the row
         open_file_object.writerow(row)
+print survival_table
